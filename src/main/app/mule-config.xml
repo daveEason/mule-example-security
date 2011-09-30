@@ -1,0 +1,132 @@
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns:spring="http://www.springframework.org/schema/beans"
+      xmlns:saml="http://www.mulesoft.org/schema/mule/ee/saml"
+      xmlns:http="http://www.mulesoft.org/schema/mule/http"
+      xmlns:cxf="http://www.mulesoft.org/schema/mule/cxf"
+      xsi:schemaLocation="
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+       http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/3.1/mule.xsd
+       http://www.mulesoft.org/schema/mule/ee/saml http://www.mulesoft.org/schema/mule/ee/saml/3.1/mule-saml-ee.xsd
+        http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/3.1/mule-http.xsd
+       http://www.mulesoft.org/schema/mule/cxf http://www.mulesoft.org/schema/mule/cxf/3.1/mule-cxf.xsd">
+
+    <saml:security-manager>
+        <saml:saml-security-provider name="samlSecurityProvider" default-realm="senderVouches">
+            <saml:keystore-provider name="default-key-provider"
+                                    key-store-file="classpath:keystore.jks"
+                                    key-store-type="jks"
+                                    key-store-password="keyStorePassword"/>
+            <saml:sender-vouches-realm name="senderVouches" sign-key-alias="joe"
+                                       sign-key-password="secret" key-provider-ref="default-key-provider"
+                                       resign-assertions="true"/>
+        </saml:saml-security-provider>
+    </saml:security-manager>
+
+    <flow name="UnsecureServiceFlow">
+        <http:inbound-endpoint address="http://localhost:63081/services/unsecure" exchange-pattern="request-response">
+            <cxf:jaxws-service serviceClass="com.mulesoft.mule.example.security.Greeter">
+                <cxf:features>
+                    <spring:bean class="org.mule.module.cxf.feature.PrettyLoggingFeature"/>
+                </cxf:features>
+            </cxf:jaxws-service>
+        </http:inbound-endpoint>
+        <component class="com.mulesoft.mule.example.security.GreeterService"/>
+    </flow>
+
+    <flow name="UsernameTokenServiceFlow">
+        <http:inbound-endpoint address="http://localhost:63081/services/username" exchange-pattern="request-response">
+            <cxf:jaxws-service serviceClass="com.mulesoft.mule.example.security.Greeter">
+                <cxf:features>
+                    <spring:bean class="org.mule.module.cxf.feature.PrettyLoggingFeature"/>
+                </cxf:features>
+                <cxf:inInterceptors>
+                    <spring:bean class="org.apache.cxf.ws.security.wss4j.WSS4JInInterceptor">
+                        <spring:constructor-arg>
+                            <spring:map>
+                                <spring:entry key="action" value="UsernameToken Timestamp"/>
+                                <spring:entry key="passwordCallbackClass"
+                                              value="com.mulesoft.mule.example.security.PasswordCallback"/>
+                            </spring:map>
+                        </spring:constructor-arg>
+                    </spring:bean>
+                </cxf:inInterceptors>
+            </cxf:jaxws-service>
+        </http:inbound-endpoint>
+        <component class="com.mulesoft.mule.example.security.GreeterService"/>
+    </flow>
+
+    <flow name="UsernameTokenSignedServiceFlow">
+        <http:inbound-endpoint address="http://localhost:63081/services/signed" exchange-pattern="request-response">
+            <cxf:jaxws-service serviceClass="com.mulesoft.mule.example.security.Greeter">
+                <cxf:features>
+                    <spring:bean class="org.mule.module.cxf.feature.PrettyLoggingFeature"/>
+                </cxf:features>
+                <cxf:inInterceptors>
+                    <spring:bean class="org.apache.cxf.ws.security.wss4j.WSS4JInInterceptor">
+                        <spring:constructor-arg>
+                            <spring:map>
+                                <spring:entry key="action" value="UsernameToken Signature Timestamp"/>
+                                <spring:entry key="signaturePropFile" value="wssecurity.properties"/>
+                                <spring:entry key="passwordCallbackClass"
+                                              value="com.mulesoft.mule.example.security.PasswordCallback"/>
+                            </spring:map>
+                        </spring:constructor-arg>
+                    </spring:bean>
+                </cxf:inInterceptors>
+            </cxf:jaxws-service>
+        </http:inbound-endpoint>
+        <component class="com.mulesoft.mule.example.security.GreeterService"/>
+    </flow>
+
+    <flow name="UsernameTokenEncryptedServiceFlow">
+        <http:inbound-endpoint address="http://localhost:63081/services/encrypted" exchange-pattern="request-response">
+            <cxf:jaxws-service serviceClass="com.mulesoft.mule.example.security.Greeter">
+                <cxf:features>
+                    <spring:bean class="org.mule.module.cxf.feature.PrettyLoggingFeature"/>
+                </cxf:features>
+                <cxf:inInterceptors>
+                    <spring:bean class="org.apache.cxf.ws.security.wss4j.WSS4JInInterceptor">
+                        <spring:constructor-arg>
+                            <spring:map>
+                                <spring:entry key="action" value="UsernameToken Timestamp Encrypt"/>
+                                <spring:entry key="decryptionPropFile" value="wssecurity.properties"/>
+                                <spring:entry key="passwordCallbackClass"
+                                              value="com.mulesoft.mule.example.security.PasswordCallback"/>
+                            </spring:map>
+                        </spring:constructor-arg>
+                    </spring:bean>
+                </cxf:inInterceptors>
+            </cxf:jaxws-service>
+        </http:inbound-endpoint>
+        <component class="com.mulesoft.mule.example.security.GreeterService"/>
+    </flow>
+
+    <flow name="SamlTokenServiceFlow">
+        <http:inbound-endpoint address="http://localhost:63081/services/saml" exchange-pattern="request-response">
+            <cxf:jaxws-service serviceClass="com.mulesoft.mule.example.security.Greeter">
+                <cxf:features>
+                    <spring:bean class="org.mule.module.cxf.feature.PrettyLoggingFeature"/>
+                </cxf:features>
+                <cxf:inInterceptors>
+                    <spring:bean class="org.apache.cxf.ws.security.wss4j.WSS4JInInterceptor">
+                        <spring:constructor-arg>
+                            <spring:map>
+                                <spring:entry key="action" value="SAMLTokenUnsigned Timestamp"/>
+                            </spring:map>
+                        </spring:constructor-arg>
+                    </spring:bean>
+                    <spring:bean class="com.mulesoft.mule.saml.cxf.SAMLVerifyInterceptor">
+                        <spring:property name="callback">
+                            <spring:bean class="com.mulesoft.mule.example.security.VerifyAuthorization">
+                                <spring:property name="subject" value="AllowGreetingServices"/>
+                            </spring:bean>
+                        </spring:property>
+                    </spring:bean>
+                </cxf:inInterceptors>
+            </cxf:jaxws-service>
+        </http:inbound-endpoint>
+        <component class="com.mulesoft.mule.example.security.GreeterService"/>
+    </flow>
+
+</mule>

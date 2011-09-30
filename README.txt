@@ -1,0 +1,30 @@
++-------------------+
+| Security Example |
++-------------------+
+This example demonstrates WS-Security for Mule using CXF web services.
+
+For more information, refer to 
+http://www.mulesoft.org/documentation/display/MULE3EXAMPLES/WS-Security+Example
+
++---------------------+
+| Running the example |
++---------------------+
+First, copy the pre-built application archive (mule-example-security.zip) to 
+the application folder ($MULE_HOME/apps) and start Mule. 
+
+Then run the command-line client using the shell script (Unix/Linux) or batch 
+file (Windows) provided in this directory.
+
+Tip: If you edit Mule's "conf/log4j.properties" file and set the logging level 
+to INFO for org.apache.cxf classes, you will be able to see the SOAP XML of the 
+request/response messages in Mule's log file. 
+
++----------------------+
+| Building the example |
++----------------------+
+First, make sure you have set the MULE_HOME environment variable as recommended
+in Mule's README.txt
+
+Depending on the build tool you are using (Ant or Maven), you can build the
+example by simply running "ant" or "mvn".  This will compile the example
+classes, produce an application zip file, and copy everything to $MULE_HOME/apps.
